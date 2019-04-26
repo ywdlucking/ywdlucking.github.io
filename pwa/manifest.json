@@ -1,7 +1,7 @@
 {
-  "name": "Hux Blog",
-  "short_name": "Hux Blog",
-  "description": "About an engineer & designer who loves web.",
+  "name": "Dong Blog",
+  "short_name": "Dong Blog",
+  "description": "写代码的 && 做美食的",
   "icons": [{
     "src": "icons/128.png",
     "sizes": "128x128",
