@@ -1,0 +1,145 @@
+---
+layout:     post
+title:      "八皇后问题"
+subtitle:   " \"算法很重要\""
+date:       2019-05-30 14:00:00
+author:     "Dong"
+header-img: "img/post-bg-2015.jpg"
+catalog: true
+tags:
+    - 算法
+---
+
+## 描叙
+八皇后问题是一个以国际象棋为背景的问题：如何能够在8×8的国际象棋棋盘上放置八个皇后，使得任何一个皇后都无法直接吃掉其他的皇后？为了达到此目的，任两个皇后都不能处于同一条横行、纵行或斜线上。八皇后问题可以推广为更一般的n皇后摆放问题：这时棋盘的大小变为n×n，而皇后个数也变成n。当且仅当n = 1或n ≥ 4时问题有解。
+
+## 思路
+1. 每一横排，每一列必定有一个解
+2. 从第一排开始，选择放皇后的位置，推及第二排的过程是重复的，所以可以考虑递归
+3. 递归调用的结束条件，就是下一排找不到放皇后的点
+4. 重新调整上一排放置的位置，继续
+5. 当计算到第八排，成功找到放皇后的位置，说明求得一个解，打印输出
+
+<center>
+    <img src="https://github.com/ywdlucking/ywdlucking.github.io/blob/master/img/about-bg.jpg">
+</center>
+
+## 代码
+```java
+package algorithm;
+
+import java.util.Arrays;
+
+/**
+ * Created by admin on 2019/5/30.
+ */
+public class Queen8 {
+
+    private static int countRs = 0;
+
+    public static void main(String[] args) {
+            int[][] arr = new int[8][8];
+            queen(arr, 0);
+    }
+
+    static void queen(int[][] arr, int num) {
+        for (int i=0; i<8&&num<8; i++){
+            if(check(arr, num, i)){
+                int[][] a = copy(arr);
+                a[num][i] = 1;
+                if(num==7&&checkAll(a)){
+                    countRs++;
+                    System.out.println("结果："+ countRs);
+                    print(a);
+                }
+                int next = num+1;
+                queen(a, next);
+            }
+        }
+    }
+
+    private static boolean checkAll(int[][] a) {
+        for (int i=0;i<8;i++){
+            boolean flag = false;
+            for (int j=0;j<8;j++){
+                if(a[i][j] == 1){
+                    flag = true;
+                }
+            }
+            if (!flag){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static int[][] copy(int[][] arr) {
+        int[][] rs = new int[8][8];
+        for (int i=0;i<8;i++){
+            rs[i] = arr[i].clone();
+        }
+        return rs;
+    }
+
+    static boolean check(int[][] arr, int i, int j){
+        if(!checkrow(arr, i, j)){
+            return false;
+        }
+        if(!checkSlash(arr, i, j)){
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean checkSlash(int[][] arr, int i, int j) {
+        int n=i; int h=j;
+        for (;i<8&&j<8;i++,j++){
+            if(arr[i][j] == 1) {
+                return false;
+            }
+        }
+        i=n;j=h;
+        for (;i>=0&&j>=0;i--,j--){
+            if(arr[i][j] == 1) {
+                return false;
+            }
+        }
+
+        i=n;j=h;
+        for (;i>=0&&j<8;i--,j++){
+            if(arr[i][j] == 1) {
+                return false;
+            }
+        }
+
+        i=n;j=h;
+        for (;i<8&&j>=0;i++,j--){
+            if(arr[i][j] == 1) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+
+    private static boolean checkrow(int[][] arr, int i, int j) {
+        for (int h=0; h<8;h++){
+            if(arr[i][h]==1 || arr[h][j] == 1){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    static void print(int[][] arr){
+        for(int i=0; i<8 ;i++){
+            System.out.println(Arrays.toString(arr[i]));
+        }
+    }
+}
+
+
+```
+
+打印输出结果：92种方法
