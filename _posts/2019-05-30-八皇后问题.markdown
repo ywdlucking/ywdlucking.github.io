@@ -21,7 +21,7 @@ tags:
 5. 当计算到第八排，成功找到放皇后的位置，说明求得一个解，打印输出
 
 <center>
-    <img src="https://github.com/ywdlucking/ywdlucking.github.io/blob/master/img/icon_wechat.png">
+    <img src="https://github.com/ywdlucking/ywdlucking.github.io/raw/master/img/icon_wechat.png">
 </center>
 
 ## 代码
