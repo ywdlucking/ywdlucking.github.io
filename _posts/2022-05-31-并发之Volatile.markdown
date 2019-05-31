@@ -1,0 +1,110 @@
+---
+layout:     post
+title:      "并发之volitile"
+subtitle:   " \"JAVA并发包浏览\""
+date:       2019-05-31 16:00:00
+author:     "Dong"
+header-img: "img/post-bg-2015.jpg"
+catalog: true
+tags:
+    - 并发
+---
+
+## 描叙
+volatile是Java提供的一种轻量级的同步机制，在并发编程中，它也扮演着比较重要的角色。同synchronized相比（synchronized通常称为重量级锁），volatile更轻量级，相比使用synchronized所带来的庞大开销，倘若能恰当的合理的使用volatile，自然是美事一桩。
+
+## Volitile不适用的场景
+
+```java
+package test;
+
+import java.util.concurrent.CountDownLatch;
+
+/**
+ * Created by chengxiao on 2017/3/18.
+ */
+public class Counter {
+    public static volatile int num = 0;
+    //使用CountDownLatch来等待计算线程执行完
+    static CountDownLatch countDownLatch = new CountDownLatch(30);
+    public static void main(String []args) throws InterruptedException {
+        //开启30个线程进行累加操作
+        for(int i=0;i<30;i++){
+            new Thread(){
+                public void run(){
+                    for(int j=0;j<10000;j++){
+                        num++;//自加操作
+                    }
+                    countDownLatch.countDown();
+                }
+            }.start();
+        }
+        //等待计算线程执行完
+        countDownLatch.await();
+        System.out.println(num);
+    }
+}
+
+```
+**结果却不是我们期待300000**
+问题就出在num++这个操作上，因为num++不是个原子性的操作，而是个复合操作。我们可以简单讲这个操作理解为由这三步组成:
+
+1. 读取
+2. 加一
+3. 赋值
+
+所以，在多线程环境下，有可能线程A将num读取到本地内存中，此时其他线程可能已经将num增大了很多，线程A依然对过期的num进行自加，重新写到主存中，最终导致了num的结果不合预期，而是小于30000。
+
+## 悲观的解决方案（阻塞同步）
+使用独占锁机制来解决，是一种悲观的并发策略，抱着一副“总有刁民想害朕”的态势，每次操作数据的时候都认为别的线程会参与竞争修改，所以直接加锁。同一刻只能有一个线程持有锁，那其他线程就会阻塞。线程的挂起恢复会带来很大的性能开销，尽管jvm对于非竞争性的锁的获取和释放做了很多优化，但是一旦有多个线程竞争锁，频繁的阻塞唤醒，还是会有很大的性能开销的。所以，使用synchronized或其他重量级锁来处理显然不够合理。
+```java
+synchronized(this){
+    num++;
+ }
+```
+
+## 乐观的解决方案（非阻塞同步）
+乐观的解决方案，顾名思义，就是很大度乐观，每次操作数据的时候，都认为别的线程不会参与竞争修改，也不加锁。如果操作成功了那最好；如果失败了，比如中途确有别的线程进入并修改了数据（依赖于冲突检测），也不会阻塞，可以采取一些补偿机制，一般的策略就是反复重试。很显然，这种思想相比简单粗暴利用锁来保证同步要合理的多。
+```java
+public class Counter {
+　　//使用原子操作类
+    public static AtomicInteger num = new AtomicInteger(0);
+    //使用CountDownLatch来等待计算线程执行完
+    static CountDownLatch countDownLatch = new CountDownLatch(30);
+    public static void main(String []args) throws InterruptedException {
+        //开启30个线程进行累加操作
+        for(int i=0;i<30;i++){
+            new Thread(){
+                public void run(){
+                    for(int j=0;j<10000;j++){
+                        num.incrementAndGet();//原子性的num++,通过循环CAS方式
+                    }
+                    countDownLatch.countDown();
+                }
+            }.start();
+        }
+        //等待计算线程执行完
+        countDownLatch.await();
+        System.out.println(num);
+    }
+}
+```
+## CAS(Compare-and-Swap)　
+CAS算法是由硬件直接支持来保证原子性的，有三个操作数：内存位置V、旧的预期值A和新值B，当且仅当V符合预期值A时，CAS用新值B原子化地更新V的值，否则，它什么都不做。
+
+　　CAS的ABA问题
+
+　　当然CAS也并不完美，它存在"ABA"问题，假若一个变量初次读取是A，在compare阶段依然是A，但其实可能在此过程中，它先被改为B，再被改回A，而CAS是无法意识到这个问题的。CAS只关注了比较前后的值是否改变，而无法清楚在此过程中变量的变更明细，这就是所谓的ABA漏洞。 
+
+## 禁止重排
+volatile禁止指令重排序也有一些规则，简单列举一下：
+
+1. 当第二个操作是voaltile写时，无论第一个操作是什么，都不能进行重排序
+
+2. 当地一个操作是volatile读时，不管第二个操作是什么，都不能进行重排序
+
+3. 当第一个操作是volatile写时，第二个操作是volatile读时，不能进行重排序
+
+
+## 总结
+简单总结下，volatile是一种轻量级的同步机制，它主要有两个特性：一是保证共享变量对所有线程的可见性；二是禁止指令重排序优化。同时需要注意的是，volatile对于单个的共享变量的读/写具有原子性，但是像num++这种复合操作，volatile无法保证其原子性，当然文中也提出了解决方案，就是使用并发包中的原子操作类，通过循环CAS地方式来保证num++操作的原子性。
