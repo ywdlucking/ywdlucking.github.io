@@ -1,0 +1,123 @@
+---
+layout:     post
+title:      "回溯算法"
+subtitle:   " \"算法很重要\""
+date:       2019-06-03 16:00:00
+author:     "Dong"
+header-img: "img/post-bg-2015.jpg"
+catalog: true
+tags:
+    - 算法
+---
+
+## 描叙
+ 回溯算法实际上一个类似枚举的搜索尝试过程，主要是在搜索尝试过程中寻找问题的解，当发现已不满足求解条件时，就“回溯”返回，尝试别的路径。 回溯法是一种选优搜索法，按选优条件向前搜索，以达到目标。但当探索到某一步时，发现原先选择并不优或达不到目标，就退回一步重新选择，这种走不通就退回再走的技术为回溯法，而满足回溯条件的某个状态的点称为“回溯点”。
+
+## 基本思想
+1. 针对所给问题，确定问题的解空间
+2. 确定结点的扩展搜索规则
+3. 以深度优先方式搜索解空间，并在搜索过程中用剪枝函数避免无效搜索
+
+## 示例
+求解一个数独的解
+<center>
+    <img src="https://github.com/ywdlucking/ywdlucking.github.io/raw/master/context-picture/backs.png">
+</center>
+
+## 代码
+```java
+package algorithm;
+
+import jnr.ffi.annotations.In;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * Created by admin on 2019/6/3.
+ */
+public class BackSearch {
+
+    private static int[][] arr = {
+            {0,6,8,0,0,3,0,0,0},
+            {0,0,9,0,4,0,0,0,5},
+            {1,0,0,0,8,0,0,0,0},
+            {0,2,1,4,0,8,0,0,0},
+            {0,0,0,1,0,5,8,0,7},
+            {0,0,0,0,0,0,0,0,0},
+            {0,5,0,0,7,0,9,0,0},
+            {0,0,0,2,0,0,6,0,3},
+            {0,0,0,0,9,0,0,4,0}
+    };
+
+    public static void main(String[] args) {
+        int[][] rs = new int[9][9];
+        search(arr, 0, rs);
+        print(rs);
+    }
+
+    public static void search(int[][] arr, int si, int[][] rs){
+        for (int i=si;i<9;i++){
+            for (int j=0;j<9;j++){
+                if(arr[i][j] == 0){
+                    List<Integer> available = available(i, j);
+                    if (available.isEmpty()){//解法错误回到上一个分叉位置
+                        return;
+                    }
+                    for (Integer in : available){
+                        arr[i][j] = in;
+                        search(arr, i, rs);
+                        //重置上一步操作
+                        arr[i][j] = 0;
+                    }
+                    //该位置的所以解集往下求解失败，结束该分支，返回上一节点
+                    return;
+                }
+            }
+        }
+        for (int i=0; i<9;i++){
+            rs[i] = arr[i].clone();
+        }
+        return;
+    }
+
+    public static List<Integer> available(int i, int j){
+        ArrayList<Integer> rs = new ArrayList<>(Arrays.asList(1,2,3,4,5,6,7,8,9));
+        for(int n=0; n<9;n++){
+            if(arr[n][j] != 0){
+                if(rs.contains(arr[n][j])){
+                    rs.remove(new Integer(arr[n][j]));
+                }
+            }
+        }
+        for(int n=0; n<9;n++){
+            if(arr[i][n] != 0){
+                if(rs.contains(arr[i][n])){
+                    rs.remove(new Integer(arr[i][n]));
+                }
+            }
+        }
+        int m = i/3;
+        int k = j/3;
+        for(int x=m*3;x<m*3+3;x++){
+            for(int y=k*3;y<k*3+3;y++){
+                if(arr[x][y] != 0){
+                    if(rs.contains(arr[x][y])){
+                        rs.remove(new Integer(arr[x][y]));
+                    }
+                }
+            }
+        }
+        return rs;
+    }
+
+    static void print(int[][] arr){
+        for(int i=0; i<9 ;i++){
+            System.out.println(Arrays.toString(arr[i]));
+        }
+    }
+}
+
+
+```

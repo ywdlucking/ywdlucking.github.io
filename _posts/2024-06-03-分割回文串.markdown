@@ -1,0 +1,70 @@
+---
+layout:     post
+title:      "分割回文串"
+subtitle:   " \"算法很重要\""
+date:       2019-06-03 17:00:00
+author:     "Dong"
+header-img: "img/post-bg-2015.jpg"
+catalog: true
+tags:
+    - 算法
+---
+
+## 描叙
+给定一个字符串 s，将 s 分割成一些子串，使每个子串都是回文串。
+
+返回 s 所有可能的分割方案。
+
+**示例:**
+```
+输入: "aab"
+输出:
+[
+  ["aa","b"],
+  ["a","a","b"]
+]
+```
+
+
+## 代码
+```java
+class Solution {
+    public List<List<String>> partition(String s) {
+        List<List<String>> result = new ArrayList<>();
+        if("".equals(s)){
+            return result;
+        }
+        List<String> list = new ArrayList<String>();
+        search(s, 0, list, result);
+        return result;
+    }
+    
+    public void search(String s, int index, List<String> list, List<List<String>> rs){
+        if(index == s.length()){
+            rs.add(new ArrayList(list));
+            return;
+        }
+        for(int i=index; i<s.length();i++){
+            String sub = s.substring(index,i+1);
+            if(isPartition(sub)){
+                list.add(sub);
+                search(s, i+1, list, rs);
+                list.remove(list.size()-1);
+            }
+        }
+    }
+    
+    public boolean isPartition(String s){
+        int i=0,j = s.length()-1;
+        while(i<j){
+            if(s.charAt(i) == s.charAt(j)){
+                i++;
+                j--;
+            }else{
+                return false;
+            }
+        }
+        return true;
+    }
+}
+```
