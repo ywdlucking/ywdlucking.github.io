@@ -1,0 +1,141 @@
+---
+layout:     post
+title:      "jenkins集成环境搭建"
+subtitle:   " \"coding使我快乐\""
+date:       2019-10-11 11:00:00
+author:     "Dong"
+header-img: "img/post-bg-2015.jpg"
+catalog: true
+tags:
+    - 编程
+---
+
+> “项目大了你需要持续集成”
+
+## 安装git
+
+> yum install git
+
+## 安装maven
+1. 下载
+> wget http://ftp.kddilabs.jp/infosystems/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz
+
+2. 安装
+> tar -xvzf apache-maven-3.6.3-bin.tar.gz
+
+3. 配置
+```java
+vi /etc/profile
+/**
+MAVEN_HOME=/home/apache-maven-3.6.3
+export MAVEN_HOME
+export PATH=${PATH}:${MAVEN_HOME}/bin
+**/
+source /etc/profile
+```
+
+## 安装jenkins
+1. 下载
+> wget https://pkg.jenkins.io/redhat-stable/jenkins-2.150.3-1.1.noarch.rpm
+
+2. 安装
+> rpm -ivh jenkins-2.150.3-1.1.noarch.rpm
+
+3. 配置
+```shell
+vim /etc/sysconfig/jenkins
+#监听端口
+JENKINS_PORT="8080"
+
+#修改配置
+JENKINS_USER="root"
+
+#修改目录权限
+chown -R root:root /var/lib/jenkins
+chown -R root:root /var/cache/jenkins
+chown -R root:root /var/log/jenkins
+
+#重启
+service jenkins restart
+ps -ef | grep jenkins
+
+#启动
+systemctl start jenkins
+```
+
+## 安装nodejs
+```shell
+#下载
+wget https://nodejs.org/dist/v12.11.1/node-v12.11.1-linux-x64.tar.xz
+
+#解压
+xz -d node-v12.11.1-linux-x64.tar.xz
+tar -xvf node-v12.11.1-linux-x64.tar
+
+#安装依赖
+sudo yum install gcc gcc-c++
+
+#配置
+sudo ln -s /home/data/nodejs/bin/node /usr/local/bin/node
+sudo ln -s /home/data/nodejs/bin/npm /usr/local/bin/npm
+npm i -g cnpm
+```
+
+## 安装nginx
+
+```shell
+#编译依赖 gcc 环境
+yum install gcc-c++
+
+#nginx 的 http 模块使用 pcre 来解析正则表达式
+yum install -y pcre pcre-devel
+
+#nginx 使用 zlib 对 http 包的内容进行 gzip 
+yum install -y zlib zlib-devel
+
+#nginx 不仅支持 http 协议，还支持 https（即在ssl协议上传输http），所以需要在 Centos 安装 OpenSSL 库
+yum install -y openssl openssl-devel
+
+#下载，地址https://nginx.org/en/download.html
+wget https://nginx.org/download/nginx-1.16.1.tar.gz
+
+#解压
+tar -zxvf nginx-1.16.1.tar.gz
+cd nginx-1.16.1
+./configure
+make
+make install
+whereis nginx
+
+#启动、停止nginx
+cd /usr/local/nginx/sbin/
+./nginx 
+#此方式相当于先查出nginx进程id再使用kill命令强制杀掉进程。
+./nginx -s stop
+#此方式停止步骤是待nginx进程处理任务完毕进行停止。
+./nginx -s quit
+#重新加载配置文件
+./nginx -s reload
+#查询
+ps aux|grep nginx
+```
+
+## 配置jenkins
+1. 选择git源
+2. build环境选择Node
+3. 执行shell
+```shell
+##参考
+cnpm install&&
+rm -rf dist&&
+npm run build&&
+cd dist&&
+tar -zcvf dist.tar.gz *&&
+rm -rf /home/www/vue/bitnews-ui/*
+cp /var/lib/jenkins/workspace/bitnews-ui-test/dist/dist.tar.gz /home/www/vue/bitnews-ui/&&
+cd /home/www/vue/bitnews-ui&&
+tar -xzvf dist.tar.gz
+```
+
+
+
